@@ -75,4 +75,26 @@ export const reqUpdateStatus=(productId,status)=>(ajax('/manage/product/updateSt
 }))
 
 export const reqDeleteImg=(name)=>ajax.post('/manage/img/delete',{name})
+
+export const reqAddUpdateProduct = (product) => ajax.post(
+    BASE + '/manage/product/' + (product._id ? 'update' : 'add'), 
+    product
+)
+// 获取所有角色的列表
+export const reqRoles = () => ajax(BASE + '/manage/role/list')
+// 添加角色
+export const reqAddRole = (roleName) => ajax.post(BASE + '/manage/role/add', {
+  roleName
+})
+// 更新角色
+export const reqUpdateRole = (role) => ajax.post(BASE + '/manage/role/update', role)
+
+// 获取所有用户的列表
+export const reqUsers = () => ajax(BASE + '/manage/user/list')
+// 删除指定用户
+export const reqDeleteUser = (userId) => ajax.post(BASE + '/manage/user/delete', {
+  userId
+})
+// 添加/更新用户
+export const reqAddOrUpdateUser = (user) => ajax.post(BASE + '/manage/user/' + (user._id ? 'update' : 'add'), user)
   

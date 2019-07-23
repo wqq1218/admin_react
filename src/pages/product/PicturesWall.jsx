@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Upload, Icon, Modal, message } from 'antd';
 import {reqDeleteImg} from '../../api'
-
+import {BASE_IMG} from '../../utils/constans'
 
 
 function getBase64(file) {
@@ -17,12 +17,12 @@ export default  class PicturesWall extends Component {
     previewVisible: false,
     previewImage: '',
     fileList: [
-      {
-        uid: '-1',
-        name: 'xxx.png',
-        status: 'done',
-        url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-      },
+      // {
+      //   uid: '-1',
+      //   name: 'xxx.png',
+      //   status: 'done',
+      //   url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
+      // },
     ],
   };
 
@@ -44,11 +44,11 @@ export default  class PicturesWall extends Component {
   handleChange = async({file, fileList }) => {
     if(file.status==='done'){
         file=fileList[fileList.length-1]
-        const {url,name}=file.response.date
+        const {url,name}=file.response.data
         file.name=name
         file.url=url
     }else if(file.status==='removed'){
-        const result= reqDeleteImg(file.name)
+        const result=await reqDeleteImg(file.name)
         if(result.status===0){
           message.success('删除图片成功')
         }else{
@@ -57,7 +57,7 @@ export default  class PicturesWall extends Component {
     }
     this.setState({ fileList })
   };
-
+  
 
   render() {
     const { previewVisible, previewImage, fileList } = this.state;

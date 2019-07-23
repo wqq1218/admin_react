@@ -1,9 +1,11 @@
 import React, { Component } from 'react'
 import LinkButton from '../../comonents/link-button/link-button'
-import {Card,Icon, Form, Select, Input, Button} from 'antd'
+import {Card,Icon, Form, Select, Input, Button,message} from 'antd'
 import memoryUtil from '../../utils/memoryUtil'
-import {reqCategorys} from '../../api'
+import {reqCategorys,reqAddUpdateProduct} from '../../api'
 import PicturesWall from './PicturesWall'
+import RichTextEditor from './rich-text-editor'
+
 
 
 const { Option } = Select;
@@ -13,12 +15,33 @@ class ProductAddUpdate extends Component {
     state={
         categorys:[]
     }
-
-    handleSubmit=(event)=>{
+  constructor (props){
+    super(props)
+    this.pwRef=React.createRef()
+    this.editorRef=React.createRef()
+  }
+    handleSubmit=  (event)=>{
       event.preventDefault()
-      this.props.form.validateFields((err,values)=>{
+      this.props.form.validateFields(async (err,values)=>{
          if(!err){
-           //const {name,desc,price,categoryId}=values
+           const {name,desc,price,categoryId}=values
+           const imgs=this.pwRef.current.getImg()
+           const detail=this.editorRef.current.getDetail()
+           const product = {name, desc, price, categoryId, imgs, detail}
+           
+        if (this.isUpdate) {
+          product._id = this.product._id
+        }
+
+        // 发请求添加或修改
+        const result = await reqAddUpdateProduct(product)
+        if (result.status===0) {
+          message.success(`${this.isUpdate ? '修改' : '添加'}商品成功`)
+          this.props.history.replace('/product')
+        } else {
+          message.error(result.msg)
+        }
+      
          }
       })
     }
@@ -40,8 +63,8 @@ class ProductAddUpdate extends Component {
        }
     }
     componentWillMount(){
-    const  product=memoryUtil.product
-    this.isUpdate=!!product._id
+    this.product=memoryUtil.product
+    this.isUpdate=!!this.product._id
     }
     componentDidMount(){
      
@@ -100,9 +123,13 @@ class ProductAddUpdate extends Component {
           )}
         </Form.Item>
         <Form.Item label="商品图片">
-           <PicturesWall/> 
+           <PicturesWall ref={this.pwRef} imgs={product.imgs}/> 
         </Form.Item>
-      
+
+        <Form.Item label="商品详情">
+           <RichTextEditor ref={this.editorRef} detail={product.detail}/> 
+        </Form.Item>
+
         <Form.Item >
           <Button type="primary" htmlType="submit">
             提交
