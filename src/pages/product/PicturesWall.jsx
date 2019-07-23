@@ -26,6 +26,8 @@ export default  class PicturesWall extends Component {
     ],
   };
 
+  getImg=()=>this.state.fileList.map(file=>file.name)
+
   handleCancel = () => this.setState({ previewVisible: false });
 
   handlePreview = async file => {
