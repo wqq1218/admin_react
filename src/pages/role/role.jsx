@@ -1,192 +1,160 @@
 import React, { Component } from 'react'
-import {
-  Card,
-  Button,
-  Table,
-  Modal,
-  message
-} from 'antd'
-
+import { Card ,Button,Table,message,Modal,} from 'antd';
 import LinkButton from '../../comonents/link-button/link-button'
-import { PAGE_SIZE } from "../../utils/constans"
+import {reqRules,reqAddRole,reUpdateRole} from '../../api/index'
+import {PAGE_SIZE} from '../../utils/constans'
+import formateDate from '../../utils/dateUtil'
 import AddForm from './add-form'
 import AuthForm from './auth-form'
-import formateDate  from '../../utils/dateUtil'
-import memoryUtils from '../../utils/memoryUtil'
-import { reqAddRole, reqUpdateRole, reqRoles } from '../../api'
+import memoryUtil from '../../utils/memoryUtil'
 
-/*
-角色路由
+/**
+ * 角色管理
  */
 export default class Role extends Component {
+   state={
+     roles:[],
+     visibleAdd: false,
+     visibleAuth:false
+   }
 
-  state = {
-    roles: [], // 所有角色的列表
-    isShowAdd: false, // 是否显示添加界面
-    isShowAuth: false, // 是否显示设置权限界面
-  }
-
-  constructor (props) {
-    super(props)
-
-    this.authRef = React.createRef()
-  }
-
-  /* 
-  初始化table列数组
-  */
-  initColumn = () => {
+  setColumns=()=>{
     this.columns = [
       {
         title: '角色名称',
-        dataIndex: 'name'
+        dataIndex: 'name',
+        
       },
       {
         title: '创建时间',
         dataIndex: 'create_time',
-        // render: create_time => formateDate(create_time)
-        render: formateDate
+        render:formateDate
       },
       {
         title: '授权时间',
         dataIndex: 'auth_time',
-        render: formateDate
+        render:formateDate
       },
       {
         title: '授权人',
-        dataIndex: 'auth_name'
+        dataIndex: 'auth_name',
       },
       {
         title: '操作',
-        render: (role) => <LinkButton onClick={() => this.showAuth(role)}>设置权限</LinkButton> 
+        render: (role ) => <LinkButton onClick={()=>this.showRole(role)}>设置权限</LinkButton>,
       },
-    ]
+    ];
+  }
+  
+  getRoles=async()=>{
+   const result=  await reqRules()
+   if(result.status===0){
+     message.success('获取角色列表成功')
+     const roles=result.data
+     this.setState({roles})
+   }else{
+     message.error('获取角色列表失败')
+   }
   }
 
-  /* 
-  显示权限设置界面
-  */
-  showAuth = (role) => {
-    // 将当前需要设置的角色保存到组件对象上
-    this.role = role
+  showRole=(role)=>{
+    this.role=role
     this.setState({
-      isShowAuth: true
+      visibleAuth:true
     })
   }
+  
 
-  /* 
-  异步获取角色列表显示
-  */
-  getRoles = async () => {
-    const result = await reqRoles()
-    if (result.status === 0) {
-      const roles = result.data
-      this.setState({
-        roles
-      })
-    }
-  }
+  
 
-  /*
-  添加角色
-   */
-  addRole = () => {
-    // 进行表单验证, 只能通过了才向下处理
-    this.form.validateFields(async (error, values) => {
-      if (!error) {
-        // 隐藏确认框
+  handleCancel = () => {
+    this.setState({
+      visibleAdd: false,
+      visibleAuth:false
+
+    });
+  };
+
+  addRole= ()=>{
+   
+    this.form.validateFields(async (error,values)=>{
+      if(!error){
         this.setState({
-          isShowAdd: false
-        })
-
-        const result = await reqAddRole(values.roleName)
-        if (result.status===0) {
-          message.success('添加角色成功')
-          this.getRoles()
-        } else {
-          message.error(result.msg)
-        }
+          visibleAdd: false,
+          visibleAuth:false
+        });
+      const {roleName}=values
+      const result= await reqAddRole(roleName)
+      if(result.status===0){
+        message.success('添加角色成功')
+        this.getRoles()
+      }else {
+        message.error('添加角色失败')
       }
+      }     
     })
   }
-
-  /*
-  给角色授权
-   */
-  updateRole = async () => {
-    // 隐藏确认框
+  updateRef=React.createRef()
+  updateRole= async()=>{
     this.setState({
-      isShowAuth: false
+      visibleAuth:false
     })
-
-    const {role} = this
-    // 更新role对象相关属性
-    role.menus = this.authRef.current.getMenus()
-    role.auth_time = Date.now()
-    role.auth_name = memoryUtils.user.username
-    // 请求更新角色
-    const result = await reqUpdateRole(role)
-    if (result.status === 0) {
-      message.success('角色授权成功')
+    const role=this.role
+    role.menus= this.updateRef.current.getMenus()
+    console.log(this.updateRef.current.getMenus())
+    role.auth_time=Date.now()
+    role.auth_name=memoryUtil.user.username
+    const result= await reUpdateRole(role)
+    if(result.status===0){
+      message.success('权限设置成功')
       this.getRoles()
-    } else {
-      message.error(result.msg)
+    }else{
+      message.error('权限设置失败')
     }
+
   }
 
-  componentWillMount() {
-    this.initColumn()
+  componentWillMount(){
+    this.setColumns()
   }
-
-  componentDidMount() {
+  componentDidMount(){
     this.getRoles()
   }
-
   render() {
-    const { roles, isShowAdd, isShowAuth } = this.state
-    const role = this.role || {}
-
-    const title = (
-      <Button type='primary' onClick={() => this.setState({ isShowAdd: true })}>
-        创建角色
-      </Button>
-    )
-
-    return (
-      <Card title={title}>
-        <Table
-          bordered
-          rowKey='_id'
-          dataSource={roles}
-          columns={this.columns}
-          pagination={{ defaultPageSize: PAGE_SIZE }}
-        />
-
+    const {roles,visibleAdd,visibleAuth}=this.state
+    const title=(
+      <Button type='primary' onClick={()=>this.setState({visibleAdd:true})}>创建角色</Button>  
+      )      
+    return ( 
+      <div>
+        <Card title={title}>
+          <Table
+              columns={this.columns}
+              dataSource={roles}
+              rowKey='_id'
+              bordered
+              pagination={{defaultPageSize:PAGE_SIZE,}}
+              
+          />,
         <Modal
           title="添加角色"
-          visible={isShowAdd}
+          visible={visibleAdd}
           onOk={this.addRole}
-          onCancel={() => {
-            this.setState({ isShowAdd: false })
-            this.form.resetFields()
-          }}
+          onCancel={this.handleCancel}
         >
-          <AddForm
-            setForm={(form) => this.form = form}
-          />
+          <AddForm setForm={(form)=>this.form=form}></AddForm>
         </Modal>
 
         <Modal
           title="设置角色权限"
-          visible={isShowAuth}
+          visible={visibleAuth}
           onOk={this.updateRole}
-          onCancel={() => {
-            this.setState({ isShowAuth: false })
-          }}
+          onCancel={this.handleCancel}
         >
-          <AuthForm ref={this.authRef} role={role} />
+          <AuthForm ref={this.updateRef} role={this.role}></AuthForm>
         </Modal>
-      </Card>
+        </Card>
+      </div>
     )
   }
 }

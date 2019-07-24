@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import { Upload, Icon, Modal, message } from 'antd';
 import {reqDeleteImg} from '../../api'
-import {BASE_IMG} from '../../utils/constans'
 
 
 function getBase64(file) {
